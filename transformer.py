@@ -7,6 +7,54 @@ from encoder import Encoder
 
 
 class Transformer(nn.Module):
+    """
+    Implementasi lengkap dari arsitektur Transformer yang terdiri dari encoder dan decoder
+    model ini digunakan untuk tugas-tugas seperti machine translation, text summarization dll
+
+    Parameter:
+        dimensi_embedding (int): dimensi vektor embedding untuk representasi vektor
+        ukuran_sumber_vocab (int): ukuran kosakata sumber (jumlah token unik dalam sumber vocab)
+        ukuran_target_vocab (int): ukuran kosakata target (jumlah token unik dalam target vocab)
+        panjang_sekuens (int): panjang sekuens yang dapat diproses oleh model
+        jumlah_block (int): jumlah blok encoder dan decoder dalam stack (default nilai 6)
+        faktor_ekspansi (int): faktor ekspansi untuk feed-forward network di setiap blok (default nilai 4)
+        heads (int): jumlah head dalam multi-head attention (default nilai 8)
+        dropout (float): probabilitas dropout untuk regularisasi (default nilai 0.27)
+
+    Attribut:
+        ukuran_target_vocab (int): menyimpan ukuran kosakata target
+        encoder (Encoder): komponen encoder yang memproses input sumber
+        decoder (Decoder): komponen decoder yang memproses input target dan interaksi dengan encoder
+        fc_output (nn.Linear): lapisan linear untuk menghasilkan probabilitas token target
+
+    Forward parameter:
+        sumber (torch.Tensor): input tensor sumber dengan bentuk (batch, seq_len_sumber)
+        target (torch.Tensor): input tensor target dengan bentuk (batch, seq_len_target)
+
+    Forward return:
+        torch.Tensor: output tensor dengan bentuk (batch, seq_len_target, ukuran_target_vocab),
+                        berisi probabilitas untuk setiap token target
+
+    Proses:
+        - menggunakan `buat_mask_target` untuk membuat mask look-ahead untuk decoder
+        - mask ini nantinya mencegah model melihat token masa depan selama decoding autoregresif
+        - input sumber dilewatkan ke encoder untuk menghasilkan representasi kontekstual
+        - input target dan output encoder dilewatkan ke decoder
+        - mask target diterapkan untuk mencegah attention ke token masa depan
+        - output decoder dilewatkan ke lapisan linear untuk menghasilkan logits
+        - softmax diterapkan pada dimensi terakhir untuk menhasilkan distribusi probabilitas
+
+    Informasi tambahan:
+        - `Encoder` dan `Decoder` adalah kelas terpisah yang mengimplementasikan komponen utama
+            transformer
+        - dropout digunakan secara konsisten di encoder dan decoder untuk regularisasi
+
+    Metode input:
+        - tensor untuk sumber harus memiliki bentuk (batch, seq_len_sumber) dengan nilai indeks
+        - tensor untuk terget harus memiliki bentuk (batch, seq_len_target) dengan nilai indeks
+        - mask target dibuat secara otomatis oleh metode `buat_mask_target`
+    """
+
     def __init__(
         self,
         dimensi_embedding: int,

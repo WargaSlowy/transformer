@@ -8,6 +8,45 @@ from embedding import Embedding, PositionalEncoding
 
 
 class TransformerBlock(nn.Module):
+    """
+    Blok dasar dari arsitektur Transformer yang menggabungkan mekanisme multi-head attention,
+    feed-forward network, dan residual connection dengan layer normalization
+
+    Attribut:
+        attention (MultiHeadAttention): lapisan multi-head attention untuk mengangkap hubungan
+                                        antar token
+        norm (nn.LayerNorm): layer normaization untuk stabilitasi dalam proses pelatihan
+        feed_forward (nn.Sequential): feed-forward network yang terdiri dari dua lapisan linear
+                                     dengan aktivasi ReLU
+        dropout (nn.Dropout): Blok dasar dari arsitektur Transformer yang menggabungkan
+                             mekanisme multi-head attention, feed-forward network, dan
+                            residual connection dengan layer normalization
+
+    Forward parameter:
+        key (torch.Tensor): tensor key dengan bentuk (batch, k_len, dimensi_embedding)
+        query (torch.Tensor): tensor query dengan bentuk (batch, q_len, dimensi_embedding)
+        value (torch.Tensor): tensor value dengan bentuk (batch, v_len, dimensi_embedding)
+        mask (torch.Tensor): mask untuk attention mechanism dengan bentuk (batch, 1, q_len, k_len)
+
+    Forward return:
+        torch.Tensor: output tensor dengan bentuk (batch, q_len, dimensi_embedding)
+
+    Proses:
+        - menggunakan `MultiHeadAttention` untuk menghitung perhatian antar token berdasarkan key, query, dan value
+        - mask diterapkan untuk mencegah perhatian ke token tertentu (misalnya padding atau look-ahead)
+        - menambahkan hasil attention ke input value sebagi residual connection
+        - menerapkan layer normalization untuk stabilitasi pelatihan
+        - dropout diterapkan setelah normalization untuk regularisasi
+        - melewatkan hasil dari langkah sebelumnya melalui feed-forward network
+        - feed-forward network terdiri dari dua lapisan linear dengan aktivasi ReLU di antarnaya
+        - menambahkan hasil feed-forward ke input sebelumnya sebagai residual connection
+        - menerapkan layer normalization akhir
+
+    Input data:
+        - tensor key, query dan value harus memiliki dimensi embedding yang sama
+        - mask harus memiliki bentuk yang kompatible dengan (batch, 1, q_len, k_len)
+    """
+
     def __init__(
         self,
         dimensi_embedding: int = 512,
@@ -69,6 +108,7 @@ class Encoder(nn.Module):
             output = block(output, output, output)
         return output
 
+
 if __name__ == "__main__":
     ukuran_vocab: int = 10_000
     panjang_sekuens: int = 20
@@ -79,10 +119,18 @@ if __name__ == "__main__":
     faktor_ekspansi: int = 4
     dropout: float = 0.2
 
-    encoder = Encoder(panjang_sekuens, ukuran_vocab, dimensi_embedding, jumlah_block, faktor_ekspansi, heads, dropout)
+    encoder = Encoder(
+        panjang_sekuens,
+        ukuran_vocab,
+        dimensi_embedding,
+        jumlah_block,
+        faktor_ekspansi,
+        heads,
+        dropout,
+    )
     input_tensor = torch.randint(0, ukuran_vocab, (ukuran_batch, panjang_sekuens))
     print(f"input tensor shape {input_tensor.shape}")
-    
+
     output = encoder(input_tensor)
     print(f"output tensor shape: {output.shape}")
     ukuran_batch * panjang_sekuens * dimensi_embedding
